@@ -2,15 +2,20 @@
  * @Author: hayden 2867571834@qq.com
  * @Date: 2025-08-30 20:37:27
  * @LastEditors: hayden 2867571834@qq.com
- * @LastEditTime: 2025-09-06 16:11:40
+ * @LastEditTime: 2025-09-09 21:32:19
  * @FilePath: \CacheSystem\testCase.cpp
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #include <iostream>
-#include <chrono>  // 包含Timer
 #include <string>
-#include <array>
+#include <chrono>
 #include <vector>
+#include <iomanip>
+#include <random>
+#include <algorithm>
+#include <array>
+#include "CachePolicy.h"
+#include "LruCache.h"
 
 // 计时器工具类，测量某段代码执行时间
 class Timer {
@@ -26,6 +31,31 @@ public:
 private:
     std::chrono::time_point<std::chrono::high_resolution_clock> start_;
 };
+
+
+// 辅助函数：打印结果
+void printResults(const std::string& testName, int capacity, 
+                const std::vector<int> get_operations, 
+                const std::vector<int>& hits) {
+    std::cout << "=== " << testName << " 结果汇总 ===" << std::endl;
+    std::cout << "缓存大小: " << capacity << std::endl;
+
+    std::vector<std::string> names;
+    if (hits.size() == 1) {
+        names = {"LRU"};
+    }
+    
+    for (size_t i = 0; i < hits.size(); ++i) {
+        double hitRate = 100.0 * hits[i] / get_operations[i];
+        std::cout << (i < names.size() ? names[i] : "Algorithm " + std::to_string(i+1)) 
+                  << " - 命中率: " << std::fixed << std::setprecision(2) 
+                  << hitRate << "% ";
+        // 添加具体命中次数和总操作次数
+        std::cout << "(" << hits[i] << "/" << get_operations[i] << ")" << std::endl;
+    }
+    std::cout << std::endl;  // 添加空行，使输出更清晰
+}
+
 
 
 void testHotDataAccess() {
@@ -64,12 +94,32 @@ void testHotDataAccess() {
             int key;
 
             // 70%概率访问热点数据，30%概率访问冷数据
-            
+            if (gen() % 100 < 70) {
+                key = gen() % HOT_KEYS;  // 热点数据
+            } else {
+                key = HOT_KEYS + (gen() % COLD_KEYS);   // 冷数据
+            }
+
+            if (isPut) {
+                // 执行put操作
+                std::string value = "value" + std::to_string(key) + "-v" + std::to_string(op % 100);
+                caches[i] -> put(key, value);
+            } else {
+                // 执行get 操作并记录命中情况
+                std::string result;  // 没有赋值，是来接受值的，get中会把value给他
+                get_operations[i]++;
+                if (caches[i] -> get(key, result)) {
+                    hits[i]++;
+                }
+            }
         }
     }
+
+    // 打印测试结果
+    printResults("热点数据访问测试", CAPACITY, get_operations, hits);
 }
 
 int main() {
-    
+    testHotDataAccess();
     return 0;    
 }

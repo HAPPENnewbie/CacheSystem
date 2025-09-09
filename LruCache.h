@@ -2,16 +2,17 @@
  * @Author: hayden 2867571834@qq.com
  * @Date: 2025-08-31 13:50:46
  * @LastEditors: hayden 2867571834@qq.com
- * @LastEditTime: 2025-09-06 16:02:07
+ * @LastEditTime: 2025-09-09 21:32:36
  * @FilePath: \CacheSystem\LruCache.h
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #pragma once
 
+#include <cstring>
 #include <mutex>
 #include <unordered_map>  // 使用哈希表
 #include <list>   // 使用双向链表
-
+#include <memory>
 #include "CachePolicy.h"
 
 namespace CacheSystem
@@ -19,7 +20,7 @@ namespace CacheSystem
 
     // 前向说明
     template <typename Key, typename Value>
-    calss LruCache;
+    class LruCache;
 
     // 缓存节点类，可以看做是双向缓存链表的节点
     template <typename Key, typename Value>
@@ -40,7 +41,7 @@ namespace CacheSystem
     private:
         Key key_;
         Value value_;
-        size_t accessCount;                       // 访问次数
+        size_t accessCount_;                       // 访问次数
         std::weak_ptr<LruNode<Key, Value>> prev_; // 改为weak_ptr打破循环引用
         std::shared_ptr<LruNode<Key, Value>> next_;
 
@@ -49,21 +50,20 @@ namespace CacheSystem
     };
 
 
-
     template <typename Key, typename Value>
     class LruCache: public CachePolicy<Key, Value>
     {
     public:
         // 别名声明
-        using LruNodeType = LruNode<Key, Value>;
-        using NodePtr = std::shared_ptr<LruNodeType>;
-        using NodeMap = std::unorered_map<Key, NodePtr>;
+        using LruNodeType = LruNode<Key, Value>;   // 缓存节点
+        using NodePtr = std::shared_ptr<LruNodeType>;    // 节点的智能指针（管理生命周期）
+        using NodeMap = std::unordered_map<Key, NodePtr>; // 哈希表：用来快速查找key有没有在当前缓存中
 
-        // 构造函数， 传入缓存容量
+        // 构造函数： 传入缓存容量， 初始化缓存上限链表
         LruCache(int capacity)
             : capacity_(capacity)
         {
-            initializer_list(); // 初始化内部双向链表
+            initializeList(); // 初始化内部双向链表
         }
 
         ~LruCache() override = default;
@@ -79,20 +79,21 @@ namespace CacheSystem
             if (it != nodeMap_.end()) {
                 // key在缓存中时，更新它对应的值，并把它标记为刚刚被访问过
                 updateExistingNode(it -> second, value);
-                return ;
+                return;
             }
-
+            // 不在缓存中则添加新节点
             addNewNode(key, value);
         }
 
+        //  如果存在节点，更新节点的value并返回true； 如果不存在节点，则返回false
         bool get(Key key, Value& value) override
         {
             std::lock_guard<std::mutex> lock(mutex_);
             auto it = nodeMap_.find(key);
             if (it != nodeMap_.end()) {
                 moveToMostRecent(it -> second);
-                value = it -> second -> getValue();
-                reurn true;
+                value = it -> second -> getValue();  // 如果存在就更新value的值
+                return true;
             }
             return false;
         }
@@ -101,7 +102,7 @@ namespace CacheSystem
         {
             Value value{};   // 1. 创建一个默认构造的 Value 对象（比如 int 就是 0）
             get(key, value);  // 2. 调用 bool get(Key, Value&) 版本，尝试读取缓存
-            return value;   // 3. 返回 value（不管有没有找到）这里也许可以优化一下
+            return value;   // 3. 返回 value， 找到了返回value, 没找到还是原本初始化的0
         } 
 
         // 删除指定元素
@@ -117,15 +118,16 @@ namespace CacheSystem
 
 
     private:
-        void initialize() 
+        void initializeList() 
         {
-            // 造一个首尾虚拟节点（方便处理边界），里面不存真实数据
-            dummyHead_ = std::make_shared<LruNodeType>(Key(), Value());
+            // 创建虚拟头尾节点，初始时相互连接（链表为空）
+            dummyHead_ = std::make_shared<LruNodeType>(Key(), Value());  // 创建了LruNodeType的对象并返回了智能指针，赋值给成员变量dummyHead_
             dummyTail_ = std::make_shared<LruNodeType>(Key(), Value());
-            dummyHead_ -> next_ = dummyTail_;
+            dummyHead_ -> next_ = dummyTail_;      
             dummyTail_ -> prev_ = dummyHead_;
         }
 
+        // 将节点移动到缓存链表的尾部，并更新value
         void updateExistingNode(NodePtr node, const Value& value) {
             // node : 已存在于链表中的那个节点, 传入它是为了修改链表来记录最近使用
             // value : 要写入的新值
@@ -133,6 +135,7 @@ namespace CacheSystem
             moveToMostRecent(node);
         }
         
+        // 添加新节点到缓存链表中，并更新哈希表
         void addNewNode(const Key& key, const Value& value) {
             //  没有缓存空间了，驱逐一个
             if (nodeMap_.size() >= capacity_) {
@@ -150,21 +153,26 @@ namespace CacheSystem
             insertNode(node);
         }
 
+        // 从双向链表中移除缓存节点
         void removeNode(NodePtr node) 
         {
-            //待补充
-            cout << "待补充" << endl;
+            if (!node -> prev_.expired() && node -> next_) {
+                auto prev = node -> prev_.lock();
+                prev -> next_ = node -> next_;
+                node -> next_ -> prev_ = prev;
+                node -> next_ = nullptr;
+            }
         }
 
         // 从尾部插入指针
         void insertNode(NodePtr node) {
-            node -> next_ = dumyTail_;
+            node -> next_ = dummyTail_;
             node -> prev_ = dummyTail_ -> prev_;
-            dummyTail_ -> prev_.lock() -> next_ = node; // 使用lock()获取shared_ptr
+            dummyTail_ -> prev_.lock() -> next_ = node; // prev是weak指针，不能直接访问节点的成员netx_, 所以要临时转换为shared指针
             dummyTail_->prev_ = node;
         }
 
-        // 驱逐最近最少访问
+        // 驱逐最近最少访问：即驱逐队列最前面的节点
         void evictLeastRecent() {
             NodePtr leastRecent  = dummyHead_ -> next_;
             removeNode(leastRecent);
@@ -177,6 +185,8 @@ namespace CacheSystem
         std::mutex mutex_;
         NodePtr dummyHead_;
         NodePtr dummyTail_;
-    }
+    };
+
+
 
 }
