@@ -2,7 +2,7 @@
  * @Author: hayden 2867571834@qq.com
  * @Date: 2025-08-30 20:37:27
  * @LastEditors: hayden 2867571834@qq.com
- * @LastEditTime: 2025-09-09 21:32:19
+ * @LastEditTime: 2025-09-11 16:00:48
  * @FilePath: \CacheSystem\testCase.cpp
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -43,6 +43,8 @@ void printResults(const std::string& testName, int capacity,
     std::vector<std::string> names;
     if (hits.size() == 1) {
         names = {"LRU"};
+    } else if (hits.size() == 2) {
+        names = {"LRU", "LRU_K"};
     }
     
     for (size_t i = 0; i < hits.size(); ++i) {
@@ -59,7 +61,7 @@ void printResults(const std::string& testName, int capacity,
 
 
 void testHotDataAccess() {
-    std::cout << "\n === 测试场景1: 热点数据访问测试 ===" << std::endl;
+    std::cout << "\n === Test Case 1: Hot-Keys data access test ===" << std::endl;
 
     const int CAPACITY = 20;         // 缓存容量
     const int OPERATIONS = 500000;   // 总操作次数
@@ -67,16 +69,21 @@ void testHotDataAccess() {
     const int COLD_KEYS = 5000;      // 冷数据数量
 
     CacheSystem::LruCache<int, std::string> lru(CAPACITY);
+    // 为LRU-K设置合适的参数：
+    // - 主缓存容量与其他算法相同
+    // - 历史记录容量设为可能访问的所有键数量
+    // - k=2表示数据被访问2次后才会进入缓存，适合区分热点和冷数据
+    CacheSystem::LruKCache<int, std::string> lruk(CAPACITY, HOT_KEYS + COLD_KEYS, 2);
 
     // 随机决定 读还是写操作 访问热点 还是 冷数据
     std::random_device rd;
     std::mt19937 gen(rd());
 
     // 基类指针指向派生类对象”，从而把 不同淘汰策略的缓存实例 统一塞进同一个容器里，方便后续 批量测试、统一调用
-    std::array<CacheSystem::CachePolicy<int, std::string>*, 1> caches = {&lru};
-    std::vector<int> hits(1, 0);  //命中计数器
-    std::vector<int> get_operations(1, 0);  //总查询计数器
-    std::vector<std::string> names = {"LRU"}; // 算法名称
+    std::array<CacheSystem::CachePolicy<int, std::string>*, 2> caches = {&lru, &lruk};
+    std::vector<int> hits(2, 0);  //命中计数器
+    std::vector<int> get_operations(2, 0);  //总查询计数器
+    std::vector<std::string> names = {"LRU", "LRU-K"}; // 算法名称
 
     // 为所有的缓存对象进行相同的操作序列测试
     for (int i = 0; i < caches.size(); ++i) {
@@ -101,13 +108,13 @@ void testHotDataAccess() {
             }
 
             if (isPut) {
-                // 执行put操作
+                // 执行put操作, 测试里加入写操作，是为了模拟真实场景，看看缓存策略在读写混合负载下的表现
                 std::string value = "value" + std::to_string(key) + "-v" + std::to_string(op % 100);
                 caches[i] -> put(key, value);
             } else {
                 // 执行get 操作并记录命中情况
                 std::string result;  // 没有赋值，是来接受值的，get中会把value给他
-                get_operations[i]++;
+                get_operations[i]++;   // 记录读操作的总次数，用来算命中率
                 if (caches[i] -> get(key, result)) {
                     hits[i]++;
                 }

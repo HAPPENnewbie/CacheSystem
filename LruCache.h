@@ -2,7 +2,7 @@
  * @Author: hayden 2867571834@qq.com
  * @Date: 2025-08-31 13:50:46
  * @LastEditors: hayden 2867571834@qq.com
- * @LastEditTime: 2025-09-09 21:32:36
+ * @LastEditTime: 2025-09-11 16:06:11
  * @FilePath: \CacheSystem\LruCache.h
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
@@ -187,6 +187,94 @@ namespace CacheSystem
         NodePtr dummyTail_;
     };
 
+    // LRU优化：Lru-k版本。 通过继承的方式进行再优化
+    template <typename Key, typename Value>
+    class LruKCache: public LruCache<Key, Value> 
+    {
+    public:
+        LruKCache(int capacity, int historyCapacity, int k) 
+            : LruCache<Key, Value> (capacity)  // 父类没有无参的默认构造函数, 所以这里需要显示调用构造
+            , historyList_(std::make_unique<LruCache<Key, size_t>>(historyCapacity))
+            , k_(k)
+            {}
+
+        Value get(Key key) 
+        {
+            // 首先尝试从主缓存获取数据
+            Value value{};
+            bool inMainCache = LruCache<Key, Value>::get(key, value);
+
+            // 根据key查找历史记录缓存节点，获取并更新访问历史计数
+            size_t historyCount = historyList_ -> get(key);
+            historyCount++;
+            historyList_ -> put(key, historyCount);
+
+            // 如果数据在主缓存,直接返回
+            if (inMainCache) {
+                return value;
+            }
+
+            // 如果不在主缓存。但访问次数达到了k次
+            if (historyCount >= k_) {
+                // 检查是否有历史值记录
+                auto it = historyValueMap_.find(key);
+                if (it != historyValueMap_.end()) {
+                    // 有历史值，将其添加到主缓存
+                    Value storedValue = it -> second;
+
+                    // 从历史记录移除
+                    historyList_ -> remove(key);
+                    historyValueMap_.erase(it);
+
+                    // 添加到主缓存
+                    LruCache<Key, Value>::put(key, storedValue);
+                    return storedValue;
+                }
+                // 没有历史值记录，无法添加到缓存，返回默认值
+            }
+            // 数据不再住缓存且不满足添加条件，返回默认值
+            return value;
+        }
+    
+        void put(Key key, Value value) 
+        {
+            // 检查是否已在住缓存
+            Value existingValue{};
+            bool inMainCache = LruCache<Key, Value>::get(key, value);
+
+            if (inMainCache) 
+            {
+                // 已在主缓存，直接更新
+                LruCache<Key, Value>::put(key, value);
+                return;
+            }
+
+            // 获取并更新访问历史
+            size_t historyCount = historyList_ -> get(key);
+            historyCount++;
+            historyList_ -> put(key, historyCount);
+            
+            // 保存值到历史记录映射，供后续get操作使用
+            historyValueMap_[key] = value;
+
+            // 检查是否达到k次访问
+            if (historyCount >= k_)
+            {
+                // 达到阀值，添加到主缓存
+                historyList_ -> remove(key);
+                historyValueMap_.erase(key);
+                LruCache<Key, Value>::put(key, value);
+            }
+        }
+
+            
+    private:
+        int k_;  // 进入缓存队列的评判标准
+        std::unique_ptr<LruCache<Key, size_t>> historyList_; //访问数据历史记录
+        std::unordered_map<Key, Value> historyValueMap_;      // 存储未到达k次访问的数据值
+    };
+
+       
 
 
 }
