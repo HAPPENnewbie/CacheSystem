@@ -2,9 +2,9 @@
  * @Author: hayden 2867571834@qq.com
  * @Date: 2025-08-30 20:37:27
  * @LastEditors: hayden 2867571834@qq.com
- * @LastEditTime: 2025-09-11 16:00:48
+ * @LastEditTime: 2025-10-23 15:57:02
  * @FilePath: \CacheSystem\testCase.cpp
- * @Description: ÕâÊÇÄ¬ÈÏÉèÖÃ,ÇëÉèÖÃ`customMade`, ´ò¿ªkoroFileHeader²é¿´ÅäÖÃ ½øĞĞÉèÖÃ: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ * @Description: è¿™æ˜¯é»˜è®¤è®¾ç½®,è¯·è®¾ç½®`customMade`, æ‰“å¼€koroFileHeaderæŸ¥çœ‹é…ç½® è¿›è¡Œè®¾ç½®: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #include <iostream>
 #include <string>
@@ -17,7 +17,7 @@
 #include "CachePolicy.h"
 #include "LruCache.h"
 
-// ¼ÆÊ±Æ÷¹¤¾ßÀà£¬²âÁ¿Ä³¶Î´úÂëÖ´ĞĞÊ±¼ä
+// è®¡æ—¶å™¨å·¥å…·ç±»ï¼Œæµ‹é‡æŸæ®µä»£ç æ‰§è¡Œæ—¶é—´
 class Timer {
 public:
     Timer()   
@@ -33,12 +33,12 @@ private:
 };
 
 
-// ¸¨Öúº¯Êı£º´òÓ¡½á¹û
+// è¾…åŠ©å‡½æ•°ï¼šæ‰“å°ç»“æœ
 void printResults(const std::string& testName, int capacity, 
                 const std::vector<int> get_operations, 
                 const std::vector<int>& hits) {
-    std::cout << "=== " << testName << " ½á¹û»ã×Ü ===" << std::endl;
-    std::cout << "»º´æ´óĞ¡: " << capacity << std::endl;
+    std::cout << "=== " << testName << " ç»“æœæ±‡æ€» ===" << std::endl;
+    std::cout << "ç¼“å­˜å¤§å°: " << capacity << std::endl;
 
     std::vector<std::string> names;
     if (hits.size() == 1) {
@@ -50,12 +50,12 @@ void printResults(const std::string& testName, int capacity,
     for (size_t i = 0; i < hits.size(); ++i) {
         double hitRate = 100.0 * hits[i] / get_operations[i];
         std::cout << (i < names.size() ? names[i] : "Algorithm " + std::to_string(i+1)) 
-                  << " - ÃüÖĞÂÊ: " << std::fixed << std::setprecision(2) 
+                  << " - å‘½ä¸­ç‡: " << std::fixed << std::setprecision(2) 
                   << hitRate << "% ";
-        // Ìí¼Ó¾ßÌåÃüÖĞ´ÎÊıºÍ×Ü²Ù×÷´ÎÊı
+        // æ·»åŠ å…·ä½“å‘½ä¸­æ¬¡æ•°å’Œæ€»æ“ä½œæ¬¡æ•°
         std::cout << "(" << hits[i] << "/" << get_operations[i] << ")" << std::endl;
     }
-    std::cout << std::endl;  // Ìí¼Ó¿ÕĞĞ£¬Ê¹Êä³ö¸üÇåÎú
+    std::cout << std::endl;  // æ·»åŠ ç©ºè¡Œï¼Œä½¿è¾“å‡ºæ›´æ¸…æ™°
 }
 
 
@@ -63,58 +63,58 @@ void printResults(const std::string& testName, int capacity,
 void testHotDataAccess() {
     std::cout << "\n === Test Case 1: Hot-Keys data access test ===" << std::endl;
 
-    const int CAPACITY = 20;         // »º´æÈİÁ¿
-    const int OPERATIONS = 500000;   // ×Ü²Ù×÷´ÎÊı
-    const int HOT_KEYS = 20;         // ÈÈµãÊı¾İÊıÁ¿
-    const int COLD_KEYS = 5000;      // ÀäÊı¾İÊıÁ¿
+    const int CAPACITY = 20;         // ç¼“å­˜å®¹é‡
+    const int OPERATIONS = 500000;   // æ€»æ“ä½œæ¬¡æ•°
+    const int HOT_KEYS = 20;         // çƒ­ç‚¹æ•°æ®æ•°é‡
+    const int COLD_KEYS = 5000;      // å†·æ•°æ®æ•°é‡
 
     CacheSystem::LruCache<int, std::string> lru(CAPACITY);
-    // ÎªLRU-KÉèÖÃºÏÊÊµÄ²ÎÊı£º
-    // - Ö÷»º´æÈİÁ¿ÓëÆäËûËã·¨ÏàÍ¬
-    // - ÀúÊ·¼ÇÂ¼ÈİÁ¿ÉèÎª¿ÉÄÜ·ÃÎÊµÄËùÓĞ¼üÊıÁ¿
-    // - k=2±íÊ¾Êı¾İ±»·ÃÎÊ2´Îºó²Å»á½øÈë»º´æ£¬ÊÊºÏÇø·ÖÈÈµãºÍÀäÊı¾İ
+    // ä¸ºLRU-Kè®¾ç½®åˆé€‚çš„å‚æ•°ï¼š
+    // - ä¸»ç¼“å­˜å®¹é‡ä¸å…¶ä»–ç®—æ³•ç›¸åŒ
+    // - å†å²è®°å½•å®¹é‡è®¾ä¸ºå¯èƒ½è®¿é—®çš„æ‰€æœ‰é”®æ•°é‡
+    // - k=2è¡¨ç¤ºæ•°æ®è¢«è®¿é—®2æ¬¡åæ‰ä¼šè¿›å…¥ç¼“å­˜ï¼Œé€‚åˆåŒºåˆ†çƒ­ç‚¹å’Œå†·æ•°æ®
     CacheSystem::LruKCache<int, std::string> lruk(CAPACITY, HOT_KEYS + COLD_KEYS, 2);
 
-    // Ëæ»ú¾ö¶¨ ¶Á»¹ÊÇĞ´²Ù×÷ ·ÃÎÊÈÈµã »¹ÊÇ ÀäÊı¾İ
+    // éšæœºå†³å®š è¯»è¿˜æ˜¯å†™æ“ä½œ è®¿é—®çƒ­ç‚¹ è¿˜æ˜¯ å†·æ•°æ®
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    // »ùÀàÖ¸ÕëÖ¸ÏòÅÉÉúÀà¶ÔÏó¡±£¬´Ó¶ø°Ñ ²»Í¬ÌÔÌ­²ßÂÔµÄ»º´æÊµÀı Í³Ò»Èû½øÍ¬Ò»¸öÈİÆ÷Àï£¬·½±ãºóĞø ÅúÁ¿²âÊÔ¡¢Í³Ò»µ÷ÓÃ
+    // åŸºç±»æŒ‡é’ˆæŒ‡å‘æ´¾ç”Ÿç±»å¯¹è±¡â€ï¼Œä»è€ŒæŠŠ ä¸åŒæ·˜æ±°ç­–ç•¥çš„ç¼“å­˜å®ä¾‹ ç»Ÿä¸€å¡è¿›åŒä¸€ä¸ªå®¹å™¨é‡Œï¼Œæ–¹ä¾¿åç»­ æ‰¹é‡æµ‹è¯•ã€ç»Ÿä¸€è°ƒç”¨
     std::array<CacheSystem::CachePolicy<int, std::string>*, 2> caches = {&lru, &lruk};
-    std::vector<int> hits(2, 0);  //ÃüÖĞ¼ÆÊıÆ÷
-    std::vector<int> get_operations(2, 0);  //×Ü²éÑ¯¼ÆÊıÆ÷
-    std::vector<std::string> names = {"LRU", "LRU-K"}; // Ëã·¨Ãû³Æ
+    std::vector<int> hits(2, 0);  //å‘½ä¸­è®¡æ•°å™¨
+    std::vector<int> get_operations(2, 0);  //æ€»æŸ¥è¯¢è®¡æ•°å™¨
+    std::vector<std::string> names = {"LRU", "LRU-K"}; // ç®—æ³•åç§°
 
-    // ÎªËùÓĞµÄ»º´æ¶ÔÏó½øĞĞÏàÍ¬µÄ²Ù×÷ĞòÁĞ²âÊÔ
+    // ä¸ºæ‰€æœ‰çš„ç¼“å­˜å¯¹è±¡è¿›è¡Œç›¸åŒçš„æ“ä½œåºåˆ—æµ‹è¯•
     for (int i = 0; i < caches.size(); ++i) {
-        // ÏÈÔ¤ÈÈ»º´æ£¬²åÈëÒ»Ğ©Êı¾İ
+        // å…ˆé¢„çƒ­ç¼“å­˜ï¼Œæ’å…¥ä¸€äº›æ•°æ®
         for (int key = 0; key < HOT_KEYS; ++key) {
             std::string value = "value" + std::to_string(key);
             caches[i] -> put(key, value);
         }
 
-        // ½»Ìæ½øĞĞputºÍget²Ù×÷, Ä£ÄâÕæÊµ³¡¾°
+        // äº¤æ›¿è¿›è¡Œputå’Œgetæ“ä½œ, æ¨¡æ‹ŸçœŸå®åœºæ™¯
         for (int op = 0; op < OPERATIONS; ++op) {
-            // ´ó¶àÊı»º´æÏµÍ³ÖĞ¶Á²Ù×÷±ÈĞ´²Ù×÷Æµ·±
-            // ËùÒÔÉèÖÃ30%¸ÅÂÊ½øĞĞĞ´²Ù×÷
+            // å¤§å¤šæ•°ç¼“å­˜ç³»ç»Ÿä¸­è¯»æ“ä½œæ¯”å†™æ“ä½œé¢‘ç¹
+            // æ‰€ä»¥è®¾ç½®30%æ¦‚ç‡è¿›è¡Œå†™æ“ä½œ
             bool isPut = (gen() % 100 < 30);
             int key;
 
-            // 70%¸ÅÂÊ·ÃÎÊÈÈµãÊı¾İ£¬30%¸ÅÂÊ·ÃÎÊÀäÊı¾İ
+            // 70%æ¦‚ç‡è®¿é—®çƒ­ç‚¹æ•°æ®ï¼Œ30%æ¦‚ç‡è®¿é—®å†·æ•°æ®
             if (gen() % 100 < 70) {
-                key = gen() % HOT_KEYS;  // ÈÈµãÊı¾İ
+                key = gen() % HOT_KEYS;  // çƒ­ç‚¹æ•°æ®
             } else {
-                key = HOT_KEYS + (gen() % COLD_KEYS);   // ÀäÊı¾İ
+                key = HOT_KEYS + (gen() % COLD_KEYS);   // å†·æ•°æ®
             }
 
             if (isPut) {
-                // Ö´ĞĞput²Ù×÷, ²âÊÔÀï¼ÓÈëĞ´²Ù×÷£¬ÊÇÎªÁËÄ£ÄâÕæÊµ³¡¾°£¬¿´¿´»º´æ²ßÂÔÔÚ¶ÁĞ´»ìºÏ¸ºÔØÏÂµÄ±íÏÖ
+                // æ‰§è¡Œputæ“ä½œ, æµ‹è¯•é‡ŒåŠ å…¥å†™æ“ä½œï¼Œæ˜¯ä¸ºäº†æ¨¡æ‹ŸçœŸå®åœºæ™¯ï¼Œçœ‹çœ‹ç¼“å­˜ç­–ç•¥åœ¨è¯»å†™æ··åˆè´Ÿè½½ä¸‹çš„è¡¨ç°
                 std::string value = "value" + std::to_string(key) + "-v" + std::to_string(op % 100);
                 caches[i] -> put(key, value);
             } else {
-                // Ö´ĞĞget ²Ù×÷²¢¼ÇÂ¼ÃüÖĞÇé¿ö
-                std::string result;  // Ã»ÓĞ¸³Öµ£¬ÊÇÀ´½ÓÊÜÖµµÄ£¬getÖĞ»á°Ñvalue¸øËû
-                get_operations[i]++;   // ¼ÇÂ¼¶Á²Ù×÷µÄ×Ü´ÎÊı£¬ÓÃÀ´ËãÃüÖĞÂÊ
+                // æ‰§è¡Œget æ“ä½œå¹¶è®°å½•å‘½ä¸­æƒ…å†µ
+                std::string result;  // æ²¡æœ‰èµ‹å€¼ï¼Œæ˜¯æ¥æ¥å—å€¼çš„ï¼Œgetä¸­ä¼šæŠŠvalueç»™ä»–
+                get_operations[i]++;   // è®°å½•è¯»æ“ä½œçš„æ€»æ¬¡æ•°ï¼Œç”¨æ¥ç®—å‘½ä¸­ç‡
                 if (caches[i] -> get(key, result)) {
                     hits[i]++;
                 }
@@ -122,9 +122,11 @@ void testHotDataAccess() {
         }
     }
 
-    // ´òÓ¡²âÊÔ½á¹û
-    printResults("ÈÈµãÊı¾İ·ÃÎÊ²âÊÔ", CAPACITY, get_operations, hits);
+    // æ‰“å°æµ‹è¯•ç»“æœ
+    printResults("çƒ­ç‚¹æ•°æ®è®¿é—®æµ‹è¯•", CAPACITY, get_operations, hits);
 }
+
+
 
 int main() {
     testHotDataAccess();

@@ -1,11 +1,4 @@
-/*
- * @Author: hayden 2867571834@qq.com
- * @Date: 2025-08-31 13:50:46
- * @LastEditors: hayden 2867571834@qq.com
- * @LastEditTime: 2025-09-11 16:06:11
- * @FilePath: \CacheSystem\LruCache.h
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
- */
+
 #pragma once
 
 #include <cstring>
@@ -22,7 +15,7 @@ namespace CacheSystem
     template <typename Key, typename Value>
     class LruCache;
 
-    // 缓存节点类，可以看做是双向缓存链表的节点
+    // 缓存节点类:可以看做是双向缓存链表的节点
     template <typename Key, typename Value>
     class LruNode
     {
@@ -45,11 +38,12 @@ namespace CacheSystem
         std::weak_ptr<LruNode<Key, Value>> prev_; // 改为weak_ptr打破循环引用
         std::shared_ptr<LruNode<Key, Value>> next_;
 
-        // 声明外部的LruCache 是友元类，LruCache可以访问友元内里的所有
+        // 声明外部的LruCache 是友元类，LruCache可以访问友元类里的所有
         friend class LruCache<Key, Value>;
     };
 
 
+    // 普通的lru
     template <typename Key, typename Value>
     class LruCache: public CachePolicy<Key, Value>
     {
@@ -187,6 +181,7 @@ namespace CacheSystem
         NodePtr dummyTail_;
     };
 
+    
     // LRU优化：Lru-k版本。 通过继承的方式进行再优化
     template <typename Key, typename Value>
     class LruKCache: public LruCache<Key, Value> 
@@ -238,7 +233,7 @@ namespace CacheSystem
     
         void put(Key key, Value value) 
         {
-            // 检查是否已在住缓存
+            // 检查是否已在主缓存
             Value existingValue{};
             bool inMainCache = LruCache<Key, Value>::get(key, value);
 
