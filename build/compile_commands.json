@@ -1,7 +1,0 @@
-[
-{
-  "directory": "E:/code/c++/CacheSystem/build",
-  "command": "D:\\tools\\msys64\\ucrt64\\bin\\c++.exe   -g -std=gnu++17 -o CMakeFiles\\main.dir\\testCase.cpp.obj -c E:\\code\\c++\\CacheSystem\\testCase.cpp",
-  "file": "E:/code/c++/CacheSystem/testCase.cpp"
-}
-]
