@@ -130,5 +130,6 @@ void testHotDataAccess() {
 
 int main() {
     testHotDataAccess();
+    std::cout << "连接服务器github信息成功" << std::endl;
     return 0;    
 }
